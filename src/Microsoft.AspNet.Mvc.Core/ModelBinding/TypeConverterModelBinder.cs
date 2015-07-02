@@ -2,7 +2,9 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.AspNet.Mvc.Core;
 
 namespace Microsoft.AspNet.Mvc.ModelBinding
 {
@@ -34,6 +36,16 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
                    bindingContext.ModelName,
                    bindingContext.ModelMetadata,
                    newModel);
+                var bindingModelTypeInfo = bindingContext.ModelType.GetTypeInfo();
+                var newModelTypeInfo = newModel?.GetType().GetTypeInfo();
+
+                if (!bindingModelTypeInfo.IsAssignableFrom(newModelTypeInfo))
+                {
+                    bindingContext.ModelState.TryAddModelError(
+                        bindingContext.ModelName,
+                        Resources.FormatCommon_ValueNotValidForProperty(newModel));
+                }
+
                 var isModelSet = newModel != null;
 
                 return new ModelBindingResult(newModel, bindingContext.ModelName, isModelSet, validationNode);

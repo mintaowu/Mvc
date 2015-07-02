@@ -167,12 +167,10 @@ namespace Microsoft.AspNet.Mvc.IntegrationTests
         }
 
         [Theory]
-        [InlineData(typeof(int), false)]
-        [InlineData(typeof(bool), false)]
-        [InlineData(typeof(string), false)]
-        [InlineData(typeof(object), true)]
-        [InlineData(typeof(IEnumerable), true)]
-        public async Task BindParameter_WithEmptyData_BindsWhenExpected(Type parameterType, bool expectedIsSetAndValid)
+        [InlineData(typeof(int))]
+        [InlineData(typeof(bool))]
+        [InlineData(typeof(string))]
+        public async Task BindParameter_WithEmptyData_DoesNotBind(Type parameterType)
         {
             // Arrange
             var argumentBinder = ModelBindingTestHelper.GetArgumentBinder();
@@ -196,13 +194,57 @@ namespace Microsoft.AspNet.Mvc.IntegrationTests
 
             // ModelBindingResult
             Assert.NotNull(modelBindingResult);
-            Assert.Equal(expectedIsSetAndValid, modelBindingResult.IsModelSet);
+            Assert.False(modelBindingResult.IsModelSet);
 
             // Model
             Assert.Null(modelBindingResult.Model);
 
             // ModelState
-            Assert.Equal(expectedIsSetAndValid, modelState.IsValid);
+            Assert.False(modelState.IsValid);
+            var key = Assert.Single(modelState.Keys);
+            Assert.Equal("Parameter1", key);
+            Assert.Equal(string.Empty, modelState[key].Value.AttemptedValue);
+            Assert.Equal(string.Empty, modelState[key].Value.RawValue);
+            var error = Assert.Single(modelState[key].Errors);
+            Assert.Equal(error.ErrorMessage, "The value '' is invalid.", StringComparer.Ordinal);
+            Assert.Null(error.Exception);
+        }
+
+        [InlineData(typeof(int?))]
+        [InlineData(typeof(bool?))]
+        [InlineData(typeof(object))]
+        [InlineData(typeof(IEnumerable))]
+        public async Task BindParameter_WithEmptyData_BindsMutableAndNullableObjects(Type parameterType)
+        {
+            // Arrange
+            var argumentBinder = ModelBindingTestHelper.GetArgumentBinder();
+            var parameter = new ParameterDescriptor
+            {
+                Name = "Parameter1",
+                BindingInfo = new BindingInfo(),
+
+                ParameterType = parameterType
+            };
+            var operationContext = ModelBindingTestHelper.GetOperationBindingContext(request =>
+            {
+                request.QueryString = QueryString.Create("Parameter1", string.Empty);
+            });
+            var modelState = new ModelStateDictionary();
+
+            // Act
+            var modelBindingResult = await argumentBinder.BindModelAsync(parameter, modelState, operationContext);
+
+            // Assert
+
+            // ModelBindingResult
+            Assert.NotNull(modelBindingResult);
+            Assert.True(modelBindingResult.IsModelSet);
+
+            // Model
+            Assert.Null(modelBindingResult.Model);
+
+            // ModelState
+            Assert.True(modelState.IsValid);
             var key = Assert.Single(modelState.Keys);
             Assert.Equal("Parameter1", key);
             Assert.Equal(string.Empty, modelState[key].Value.AttemptedValue);
