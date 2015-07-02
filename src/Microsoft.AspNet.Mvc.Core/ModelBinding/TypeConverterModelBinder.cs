@@ -34,12 +34,9 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
                    bindingContext.ModelName,
                    bindingContext.ModelMetadata,
                    newModel);
+                var isModelSet = newModel != null;
 
-                return new ModelBindingResult(
-                    newModel,
-                    bindingContext.ModelName,
-                    isModelSet: true,
-                    validationNode: validationNode);
+                return new ModelBindingResult(newModel, bindingContext.ModelName, isModelSet, validationNode);
             }
             catch (Exception ex)
             {
