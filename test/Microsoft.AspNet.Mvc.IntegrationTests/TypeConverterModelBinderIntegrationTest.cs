@@ -1,6 +1,8 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
+using System.Collections;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Http;
 using Microsoft.AspNet.Mvc.ModelBinding;
@@ -162,6 +164,50 @@ namespace Microsoft.AspNet.Mvc.IntegrationTests
             Assert.Equal("someValue", modelState[key].Value.RawValue);
             Assert.Empty(modelState[key].Errors);
             Assert.Equal(ModelValidationState.Valid, modelState[key].ValidationState);
+        }
+
+        [Theory]
+        [InlineData(typeof(int), false)]
+        [InlineData(typeof(bool), false)]
+        [InlineData(typeof(string), false)]
+        [InlineData(typeof(object), true)]
+        [InlineData(typeof(IEnumerable), true)]
+        public async Task BindParameter_WithEmptyData_BindsWhenExpected(Type parameterType, bool expectedIsSetAndValid)
+        {
+            // Arrange
+            var argumentBinder = ModelBindingTestHelper.GetArgumentBinder();
+            var parameter = new ParameterDescriptor
+            {
+                Name = "Parameter1",
+                BindingInfo = new BindingInfo(),
+
+                ParameterType = parameterType
+            };
+            var operationContext = ModelBindingTestHelper.GetOperationBindingContext(request =>
+            {
+                request.QueryString = QueryString.Create("Parameter1", string.Empty);
+            });
+            var modelState = new ModelStateDictionary();
+
+            // Act
+            var modelBindingResult = await argumentBinder.BindModelAsync(parameter, modelState, operationContext);
+
+            // Assert
+
+            // ModelBindingResult
+            Assert.NotNull(modelBindingResult);
+            Assert.Equal(expectedIsSetAndValid, modelBindingResult.IsModelSet);
+
+            // Model
+            Assert.Null(modelBindingResult.Model);
+
+            // ModelState
+            Assert.Equal(expectedIsSetAndValid, modelState.IsValid);
+            var key = Assert.Single(modelState.Keys);
+            Assert.Equal("Parameter1", key);
+            Assert.Equal(string.Empty, modelState[key].Value.AttemptedValue);
+            Assert.Equal(string.Empty, modelState[key].Value.RawValue);
+            Assert.Empty(modelState[key].Errors);
         }
 
         [Fact]

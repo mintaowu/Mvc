@@ -139,7 +139,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Test
             var bindingContext = GetBindingContext(typeof(string));
             bindingContext.ValueProvider = new SimpleHttpValueProvider
             {
-                { "theModelName", "" }
+                { "theModelName", string.Empty }
             };
 
             var binder = new TypeConverterModelBinder();
