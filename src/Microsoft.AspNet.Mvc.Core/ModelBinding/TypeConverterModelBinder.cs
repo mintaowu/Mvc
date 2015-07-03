@@ -36,17 +36,16 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
                    bindingContext.ModelName,
                    bindingContext.ModelMetadata,
                    newModel);
-                var bindingModelTypeInfo = bindingContext.ModelType.GetTypeInfo();
-                var newModelTypeInfo = newModel?.GetType().GetTypeInfo();
+                var isModelSet = true;
 
-                if (!bindingModelTypeInfo.IsAssignableFrom(newModelTypeInfo))
+                if (newModel == null && !AllowsNullValue(bindingContext.ModelType))
                 {
                     bindingContext.ModelState.TryAddModelError(
                         bindingContext.ModelName,
                         Resources.FormatCommon_ValueNotValidForProperty(newModel));
-                }
 
-                var isModelSet = newModel != null;
+                    isModelSet = false;
+                }
 
                 return new ModelBindingResult(newModel, bindingContext.ModelName, isModelSet, validationNode);
             }
@@ -58,6 +57,11 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             // Were able to find a converter for the type but conversion failed.
             // Tell the model binding system to skip other model binders i.e. return non-null.
             return new ModelBindingResult(model: null, key: bindingContext.ModelName, isModelSet: false);
+        }
+
+        private static bool AllowsNullValue(Type type)
+        {
+            return !type.GetTypeInfo().IsValueType || Nullable.GetUnderlyingType(type) != null;
         }
     }
 }

@@ -169,7 +169,6 @@ namespace Microsoft.AspNet.Mvc.IntegrationTests
         [Theory]
         [InlineData(typeof(int))]
         [InlineData(typeof(bool))]
-        [InlineData(typeof(string))]
         public async Task BindParameter_WithEmptyData_DoesNotBind(Type parameterType)
         {
             // Arrange
@@ -212,6 +211,7 @@ namespace Microsoft.AspNet.Mvc.IntegrationTests
 
         [InlineData(typeof(int?))]
         [InlineData(typeof(bool?))]
+        [InlineData(typeof(string))]
         [InlineData(typeof(object))]
         [InlineData(typeof(IEnumerable))]
         public async Task BindParameter_WithEmptyData_BindsMutableAndNullableObjects(Type parameterType)
